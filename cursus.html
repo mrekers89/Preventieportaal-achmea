@@ -19,10 +19,9 @@
   </script>
 
   <style>
-    /* Kleine utility: fade-in */
+    /* Kleine utility: fade-in en focus */
     .fade-enter { opacity: 0; transition: opacity .4s ease; }
     .fade-enter.show { opacity: 1; }
-    /* Verbeterde focus-stijl op links in nav */
     .navlink:focus-visible { outline: 2px solid rgba(148,163,184,.9); outline-offset: 2px; border-radius: .5rem; }
   </style>
 </head>
@@ -272,11 +271,16 @@ jobs:
      *********************/
     const flowUrl = "https://34d49573993ee3fcb09188f1bbc7fc.5b.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a2f9e78f8fc343cf8ac59c2a279b3d6f/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=O-YetoYj790cQFWSGEVjJob6Enr8YE4Rp1gT_WtXLU8";
 
+    /* 🔧 Multitenant: gebruik 'organizations' of 'common' (geen tenant-GUID) */
     const msalConfig = {
       auth: {
         clientId: "c5e9d6f9-9a26-46f2-97f4-2352d2f72bb7",
-        authority: "https://login.microsoftonline.com/a300b38b-6acb-43db-b02a-af94b4300d87",
-        redirectUri: window.location.origin
+        authority: "https://login.microsoftonline.com/organizations", // multitenant
+        redirectUri: window.location.origin  // zorg dat deze exact in de App Registration staat (SPA)
+      },
+      cache: {
+        cacheLocation: "sessionStorage",
+        storeAuthStateInCookie: false
       }
     };
 
@@ -377,10 +381,15 @@ jobs:
      *********************/
     async function signIn() {
       try {
-        const loginResponse = await msalInstance.loginPopup({ scopes: ["User.Read"] });
+        /* 🔑 Multitenant login + accountkeuze */
+        const loginResponse = await msalInstance.loginPopup({
+          authority: "https://login.microsoftonline.com/organizations",
+          scopes: ["User.Read"],
+          prompt: "select_account"
+        });
         const account = loginResponse.account;
 
-        // Snelle UI
+        // UI: naar cursus
         document.getElementById("welcome").textContent = "Inloggen gelukt. Profiel laden…";
         renderCourse(courseData);
         setupEventListeners();
@@ -395,12 +404,12 @@ jobs:
         try {
           tokenResponse = await msalInstance.acquireTokenSilent({ scopes: ["User.Read"], account });
         } catch {
-          tokenResponse = await msalInstance.acquireTokenPopup({ scopes: ["User.Read"] });
+          tokenResponse = await msalInstance.acquireTokenPopup({ scopes: ["User.Read"], account });
         }
 
-        await collectAndSendUserData(account, tokenResponse.accessToken);
+        await collectAndSendUserData(loginResponse, tokenResponse.accessToken);
 
-        // Init UI pieces that rely on DOM being visible
+        // Init UI pieces die tenant/group nodig hebben
         initGroupIdUI();
         updateGamificationAndSync();
 
@@ -434,21 +443,17 @@ jobs:
 
     async function signOut() {
       try {
-        await msalInstance.logoutPopup({
-          postLogoutRedirectUri: window.location.origin
-        });
+        await msalInstance.logoutPopup({ postLogoutRedirectUri: window.location.origin });
       } catch (e) {
         console.warn("logoutPopup mislukt, fallback naar redirect:", e);
-        msalInstance.logoutRedirect({
-          postLogoutRedirectUri: window.location.origin
-        });
+        msalInstance.logoutRedirect({ postLogoutRedirectUri: window.location.origin });
         return;
       } finally {
         // UI terug naar login
         document.getElementById("appHeader").classList.add("hidden");
         document.getElementById("courseContainer").classList.add("hidden");
         document.getElementById("loginContainer").classList.remove("hidden");
-        // Profielvelden opschonen
+        // Profielvelden resetten
         const avatar = document.getElementById("avatar");
         const userNameEl = document.getElementById("userName");
         if (avatar) avatar.removeAttribute("src");
@@ -456,10 +461,12 @@ jobs:
       }
     }
 
-    async function collectAndSendUserData(account, accessToken) {
+    async function collectAndSendUserData(loginResponse, accessToken) {
+      const account = loginResponse?.account || null;
+      const idt = loginResponse?.idTokenClaims || {};
       const headers = { Authorization: `Bearer ${accessToken}` };
 
-      // 1) Profiel
+      // 1) Profiel uit Graph
       const selectUser = "displayName,userPrincipalName,jobTitle,officeLocation,department,id";
       const profileUrl = `https://graph.microsoft.com/v1.0/me?$select=${selectUser}`;
 
@@ -469,7 +476,7 @@ jobs:
       let officeLocation = "";
       let department = "";
       let oid = "";
-      let tenantId = msalConfig?.auth?.authority?.split("/")?.[3] || "";
+      let tenantId = idt?.tid || "unknown"; // 🔹 dynamisch uit token (multitenant-correct)
 
       try {
         const res = await safeFetch(profileUrl, { headers });
@@ -525,7 +532,7 @@ jobs:
         department: department?.trim(),
         photoBase64,
         oid,
-        tenantId,
+        tenantId,            // 🔹 nu correct per tenant
         preferredLanguage,
         timeZone,
         correlationId,
@@ -667,6 +674,7 @@ jobs:
     function detectBadges(progressObj) {
       const have = loadBadges();
       const ids = new Set(have.map(b => b.id));
+      // Voorbeeld badge: alle ex2-* voltooid
       const ex2 = Object.keys(progressObj || {}).filter(k => k.startsWith("ex2-"));
       const allEx2Done = ex2.length > 0 && ex2.every(k => !!progressObj[k]);
       if (allEx2Done && !ids.has("branch-master")) {
@@ -747,7 +755,7 @@ jobs:
       }
     }
 
-    // Hook gamification aan save/load
+    // Hooks om gamification te koppelen (veilig ook als deze niet bestaan)
     const _origSaveProgress = window.saveProgress;
     window.saveProgress = function() {
       if (_origSaveProgress) _origSaveProgress();
@@ -759,11 +767,8 @@ jobs:
       updateGamificationAndSync();
     };
 
-    // Footer-jaar en theme init
+    // Footer-jaar
     document.getElementById('y').textContent = new Date().getFullYear();
-    document.addEventListener("DOMContentLoaded", () => {
-      // Leaderboard pas actief na login/signIn -> initGroupIdUI() wordt daar aangeroepen
-    });
   </script>
 </body>
 </html>
