@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Inloggen – Preventieportal</title>
   <meta name="description" content="Demo-loginpagina voor de Preventieportal (trainingsdoeleinden)." />
-
+  <link rel="preload" as="image" href="https://deduik.com/wp-content/uploads/2020/02/achmea-logo-e1627899420163.png" />
   <style>
     :root{
       --bg:#0f172a; --panel:#111827; --card:#1f2937; --text:#e5e7eb;
@@ -15,19 +15,18 @@
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial}
     a{color:inherit;text-decoration:none}
     a:focus,button:focus,input:focus{outline:2px solid var(--ring);outline-offset:2px}
-
     .container{max-width:900px;margin-inline:auto;padding:24px}
 
-    /* Header & navigatie */
+    /* Header & nav */
     header{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0));border-bottom:1px solid rgba(255,255,255,.08)}
     .topbar{display:flex;gap:16px;align-items:center;justify-content:space-between}
     .brand{display:flex;align-items:center;gap:12px;font-weight:700}
-    .brand img{display:block;border-radius:8px}
+    .brand img{display:block;border-radius:8px;width:40px;height:40px;object-fit:contain;background:#fff;padding:2px;border:1px solid rgba(0,0,0,.08)}
     .menu{list-style:none;display:flex;gap:14px;margin:0;padding:0}
     .menu a{padding:8px 12px;border-radius:8px}
-    .menu a:hover{background:rgba(255,255,255,.08)}
+    .menu a:hover{background:rgba(255,255,255,0.08)}
 
-    /* Pagina lay-out */
+    /* Content */
     main{display:grid;gap:20px}
     h1{font-size:clamp(26px,3vw,34px);margin:18px 0 0}
     p.muted{color:var(--muted)}
@@ -41,34 +40,26 @@
       background:#0b1220;border:1px solid rgba(255,255,255,.14);color:var(--text);
       border-radius:10px;padding:10px
     }
-    .row{display:grid;gap:12px;align-items:center}
     .row-inline{display:flex;gap:10px;align-items:center}
     .btn{display:inline-block;background:var(--accent);color:#06130a;font-weight:700;padding:10px 14px;border-radius:10px;border:1px solid rgba(0,0,0,.2);cursor:pointer}
     .btn:hover{filter:brightness(1.05)}
     .links{display:flex;gap:12px;flex-wrap:wrap;margin-top:8px}
     .hint{font-size:13px;color:var(--muted)}
     .error{color:var(--danger);font-size:14px}
-
     footer{margin-top:24px;padding:16px;border-top:1px solid rgba(255,255,255,.08);color:var(--muted)}
+    .sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;padding:0}
   </style>
 </head>
 <body>
-
-  <!-- ENIGE header (logo-nav behouden) -->
   <header>
     <div class="container">
       <nav aria-label="Primaire navigatie" class="topbar">
-        <a href="index.html" class="brand" aria-label="Naar startpagina">
-          <img
-            src="logo.webp"           <!-- pas zonodig aan naar assets/logo.webp -->
-            alt="Preventieportal"
-            width="40" height="40"
-            decoding="async"
-            fetchpriority="high"
-          />
+        <a href="index.html" class="brand" aria-label="Naar startpagina Preventieportal">
+          <img src="https://deduik.com/wp-content/uploads/2020/02/achmea-logo-e1627899420163.png" alt="Achmea logo" width="40" height="40" decoding="async" fetchpriority="high" />
           <span>Preventieportal</span>
         </a>
         <ul class="menu">
+          <li><a href="index.html">Home</a></li>
           <li><a href="firepagina.html">Brand</a></li>
           <li><a href="contact.html">Contact</a></li>
           <li><a href="login.html" aria-current="page">Inloggen</a></li>
@@ -83,7 +74,6 @@
 
     <section class="card form" aria-labelledby="login-heading" role="region">
       <h2 id="login-heading" class="sr-only">Loginformulier</h2>
-
       <form id="loginForm" method="post" action="#" novalidate>
         <div class="field">
           <label for="email">E-mailadres</label>
@@ -124,7 +114,6 @@
   </main>
 
   <script>
-    // Footer-jaar
     document.getElementById('y').textContent = new Date().getFullYear();
 
     // Toon/verberg wachtwoord
