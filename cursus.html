@@ -3,28 +3,59 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>GitHub Cursusomgeving</title>
+  <title>Inloggen – Preventieportal</title>
+  <meta name="description" content="Demo-loginpagina voor de Preventieportal (trainingsdoeleinden)." />
+
+  <!-- Preload logo voor snellere weergave -->
+  <link rel="preload" as="image" href="https://deduik.com/wp-content/uploads/2020/02/achmea-logo-e1627899420163.png" />
 
   <!-- MSAL 2.x -->
   <script src="https://alcdn.msauth.net/browser/2.37.0/js/msal-browser.min.js"></script>
+
   <!-- Tailwind (CDN) -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Tailwind configuratie: enable class-based dark mode
     tailwind.config = { darkMode: 'class' };
   </script>
 
   <style>
-    /* Minimal extras */
-    details summary::-webkit-details-marker { display: none; }
+    /* Kleine utility: fade-in */
     .fade-enter { opacity: 0; transition: opacity .4s ease; }
     .fade-enter.show { opacity: 1; }
+    /* Verbeterde focus-stijl op links in nav */
+    .navlink:focus-visible { outline: 2px solid rgba(148,163,184,.9); outline-offset: 2px; border-radius: .5rem; }
   </style>
 </head>
+
 <body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans">
-  <div id="appContainer" class="max-w-4xl mx-auto p-4 sm:p-8">
-    <!-- Header -->
-    <header id="appHeader" class="hidden flex justify-between items-center mb-8 pb-4 border-b border-slate-200 dark:border-slate-700">
+  <!-- PORTAL HEADER -->
+  <header class="bg-white/10 dark:bg-slate-900/30 border-b border-slate-200/50 dark:border-slate-700/60">
+    <div class="max-w-5xl mx-auto px-4 sm:px-8">
+      <nav aria-label="Primaire navigatie" class="flex items-center justify-between gap-4 py-4">
+        <a href="index.html" class="flex items-center gap-3 font-bold navlink" aria-label="Naar startpagina Preventieportal">
+          <img
+            src="https://deduik.com/wp-content/uploads/2020/02/achmea-logo-e1627899420163.png"
+            alt="Achmea logo"
+            width="40" height="40"
+            fetchpriority="high" decoding="async"
+            class="w-10 h-10 rounded-md border border-black/10 bg-white object-contain p-0.5"
+          />
+          <span>Preventieportal</span>
+        </a>
+        <ul class="flex items-center gap-2 sm:gap-3">
+          <li><a href="index.html" class="navlink px-3 py-2 rounded-md hover:bg-white/20 dark:hover:bg-white/10">Home</a></li>
+          <li><a href="firepagina.html" class="navlink px-3 py-2 rounded-md hover:bg-white/20 dark:hover:bg-white/10">Brand</a></li>
+          <li><a href="contact.html" class="navlink px-3 py-2 rounded-md hover:bg-white/20 dark:hover:bg-white/10">Contact</a></li>
+          <li><a href="login.html" aria-current="page" class="navlink px-3 py-2 rounded-md bg-white/30 dark:bg-white/10">Inloggen</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- PAGE CONTAINER -->
+  <div id="appContainer" class="max-w-5xl mx-auto p-4 sm:p-8">
+    <!-- Training-utility header (toont na inloggen) -->
+    <section id="appHeader" class="hidden flex justify-between items-center mb-8 pb-4 border-b border-slate-200 dark:border-slate-700">
       <h1 class="text-2xl font-bold text-slate-700 dark:text-slate-100">GitHub Masterclass</h1>
       <div class="flex items-center gap-3">
         <!-- GroupID -->
@@ -55,9 +86,9 @@
           Uitloggen
         </button>
       </div>
-    </header>
+    </section>
 
-    <!-- Main -->
+    <!-- MAIN -->
     <main id="mainContent">
       <!-- Login kaart -->
       <div id="loginContainer" class="bg-white dark:bg-slate-800 rounded-xl shadow-lg p-8 text-center transition-opacity duration-500">
@@ -130,6 +161,13 @@
       </div>
     </main>
   </div>
+
+  <!-- FOOTER -->
+  <footer class="mt-10 border-t border-slate-200 dark:border-slate-700">
+    <div class="max-w-5xl mx-auto px-4 sm:px-8 py-6 text-sm text-slate-600 dark:text-slate-300">
+      © <span id="y"></span> Preventieportal – Trainingsdemo. Geen echte accounts of opslag.
+    </div>
+  </footer>
 
   <!-- Course data -->
   <script>
@@ -396,7 +434,6 @@ jobs:
 
     async function signOut() {
       try {
-        // Popup-logout zodat je op dezelfde pagina blijft
         await msalInstance.logoutPopup({
           postLogoutRedirectUri: window.location.origin
         });
@@ -411,13 +448,11 @@ jobs:
         document.getElementById("appHeader").classList.add("hidden");
         document.getElementById("courseContainer").classList.add("hidden");
         document.getElementById("loginContainer").classList.remove("hidden");
-        // Optioneel: profielvelden legen
+        // Profielvelden opschonen
         const avatar = document.getElementById("avatar");
         const userNameEl = document.getElementById("userName");
         if (avatar) avatar.removeAttribute("src");
         if (userNameEl) userNameEl.textContent = "";
-        // Optioneel: ook progress wissen
-        // localStorage.removeItem(progressKey);
       }
     }
 
@@ -481,7 +516,7 @@ jobs:
       window._userName = name?.trim();
       window._userEmail = email?.trim();
 
-      // 5) Stuur naar Flow (zelfde veldnamen als je e-mailtemplate verwacht)
+      // 5) Stuur naar Flow
       await sendToFlow({
         name: window._userName,
         email: window._userEmail,
@@ -505,7 +540,6 @@ jobs:
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-        // Als de Flow een JSON terugstuurt, geef die door
         const ct = res.headers.get("content-type") || "";
         if (ct.includes("application/json")) {
           return await res.json();
@@ -566,7 +600,6 @@ jobs:
       card.classList.remove("hidden");
       body.textContent = "Laden…";
       try {
-        // Verwacht JSON-array [{name, xp, level}, ...] vanuit Flow
         const url = flowUrl + "&mode=leaderboard&groupId=" + encodeURIComponent(groupId);
         const res = await fetch(url);
         if (!res.ok) throw new Error("HTTP " + res.status);
@@ -634,7 +667,6 @@ jobs:
     function detectBadges(progressObj) {
       const have = loadBadges();
       const ids = new Set(have.map(b => b.id));
-      // Branch Master: alle ex2-* oefeningen voltooid
       const ex2 = Object.keys(progressObj || {}).filter(k => k.startsWith("ex2-"));
       const allEx2Done = ex2.length > 0 && ex2.every(k => !!progressObj[k]);
       if (allEx2Done && !ids.has("branch-master")) {
@@ -684,7 +716,6 @@ jobs:
       renderXP(xp);
       renderBadges(badges);
 
-      // Leaderboard sync (optioneel)
       const groupId = localStorage.getItem(groupKey) || "";
       if (groupId) {
         postStatsToFlow({ xp, level: levelFromXP(xp), badges, groupId });
@@ -716,7 +747,7 @@ jobs:
       }
     }
 
-    // Patch hooks: koppel gamification aan jouw bestaande save/load
+    // Hook gamification aan save/load
     const _origSaveProgress = window.saveProgress;
     window.saveProgress = function() {
       if (_origSaveProgress) _origSaveProgress();
@@ -728,9 +759,9 @@ jobs:
       updateGamificationAndSync();
     };
 
-    // Init theme en (op login) Group/Leaderboard
+    // Footer-jaar en theme init
+    document.getElementById('y').textContent = new Date().getFullYear();
     document.addEventListener("DOMContentLoaded", () => {
-      initTheme();
       // Leaderboard pas actief na login/signIn -> initGroupIdUI() wordt daar aangeroepen
     });
   </script>
