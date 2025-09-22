@@ -5,3 +5,6 @@ Dit document geeft een overzicht van de Preventieportal.
 Teamleden: Ben, Lisette, Michel   
 Eerste versie opleveren: eind week 1   
 Review en demo: week 2   
+
+## Aanvullende doelstelling 
+De Preventieportal moet later ook interactieve quizzen bevatten.
